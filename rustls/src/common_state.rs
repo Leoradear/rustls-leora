@@ -269,7 +269,7 @@ impl CommonState {
             Limit::No => payload.len(),
         };
 
-        let ts_b4_fr = Instant::now();
+        let ts_before_fr = Instant::now();
         let iter = self
             .message_fragmenter
             .fragment_payload(
