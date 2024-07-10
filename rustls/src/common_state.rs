@@ -6,7 +6,7 @@ use pki_types::CertificateDer;
 use crate::enums::{AlertDescription, ContentType, HandshakeType, ProtocolVersion};
 use crate::error::{Error, InvalidMessage, PeerMisbehaved};
 #[cfg(feature = "logging")]
-use crate::log::{debug, warn};
+use crate::log::{debug, warn, error};
 use crate::msgs::alert::AlertMessagePayload;
 use crate::msgs::base::Payload;
 use crate::msgs::enums::{AlertLevel, KeyUpdateRequest};
