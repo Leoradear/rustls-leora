@@ -1,6 +1,6 @@
 use alloc::boxed::Box;
 use alloc::vec::Vec;
-
+use std::time::Instant;
 use pki_types::CertificateDer;
 
 use crate::enums::{AlertDescription, ContentType, HandshakeType, ProtocolVersion};
@@ -269,6 +269,7 @@ impl CommonState {
             Limit::No => payload.len(),
         };
 
+        let ts_b4_fr = Instant::now();
         let iter = self
             .message_fragmenter
             .fragment_payload(
@@ -276,8 +277,19 @@ impl CommonState {
                 ProtocolVersion::TLSv1_2,
                 payload.split_at(len).0,
             );
+            
+        let interval_ = ts_before_fr.elapsed().as_micros();
+        if interval_ > 1000 {
+            error!("interval between fragment is {} us", interval_);
+        }
+
+        let ts_before_en = Instant::now();
         for m in iter {
             self.send_single_fragment(m);
+        }
+        let interval__ = ts_before_en.elapsed().as_micros();
+        if interval__ > 2000 {
+            error!("interval between fragment is {} us", interval__);
         }
 
         len
@@ -300,7 +312,12 @@ impl CommonState {
         }
 
         let em = self.record_layer.encrypt_outgoing(m);
+        let ts_b4_queue = Instant::now();
         self.queue_tls_message(em);
+        let el = ts_b4_queue.elapsed().as_micros();
+        if el > 1000 {
+            error!("encode cost {}", el);
+        }
     }
 
     fn send_plain_non_buffering(&mut self, payload: OutboundChunks<'_>, limit: Limit) -> usize {

@@ -1,10 +1,10 @@
 use alloc::boxed::Box;
 use core::num::NonZeroU64;
-
+use std::time::Instant;
 use crate::crypto::cipher::{InboundOpaqueMessage, MessageDecrypter, MessageEncrypter};
 use crate::error::Error;
 #[cfg(feature = "logging")]
-use crate::log::trace;
+use crate::log::{trace, error};
 use crate::msgs::message::{InboundPlainMessage, OutboundOpaqueMessage, OutboundPlainMessage};
 
 static SEQ_SOFT_LIMIT: u64 = 0xffff_ffff_ffff_0000u64;
@@ -110,13 +110,19 @@ impl RecordLayer {
         &mut self,
         plain: OutboundPlainMessage,
     ) -> OutboundOpaqueMessage {
+        let t0 = Instant::now();
         debug_assert!(self.encrypt_state == DirectionState::Active);
         assert!(!self.encrypt_exhausted());
         let seq = self.write_seq;
-        self.write_seq += 1;
+        let res = self.write_seq += 1;
         self.message_encrypter
             .encrypt(plain, seq)
-            .unwrap()
+            .unwrap();
+        let el0 = t0.elapsed().as_micros();
+        if el0 > 1000 {
+            error!("encrpt cost {}, write_seq is {}", el0, self.write_seq);
+        }
+        res
     }
 
     /// Prepare to use the given `MessageEncrypter` for future message encryption.
